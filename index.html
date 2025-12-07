@@ -77,10 +77,15 @@
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 10;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease;
+            opacity: 0; 
+            visibility: hidden; /* CRITICAL FIX: Ensures buttons are not clickable when hidden */
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
         }
-        .overlay.active { opacity: 1; pointer-events: all; }
+        .overlay.active { 
+            opacity: 1; 
+            visibility: visible;
+            transition: opacity 0.3s ease, visibility 0s 0s;
+        }
 
         /* Z-Index Layering */
         #menu-screen { z-index: 20; }
@@ -140,197 +145,88 @@
         }
         .overlay.active .modal { transform: scale(1); }
 
-        /* --- TUTORIAL (Compact & No Scroll) --- */
-        .tutorial-wrapper {
-            display: flex;
-            flex-direction: row; /* Side by side */
-            gap: 10px;
-            width: 100%;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        
-        .tutorial-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .tutorial-scene {
-            width: 100%;
-            height: 100px; /* Compact height */
-            background: var(--tut-bg);
-            border-radius: 15px;
-            position: relative;
-            overflow: hidden;
+        .modal-icon {
+            width: 80px; height: 80px;
+            margin: 0 auto 20px;
             display: flex; justify-content: center; align-items: center;
         }
+        .modal-icon svg { width: 100%; height: 100%; }
 
-        .t-caption {
-            font-size: 0.75rem; color: var(--sub-text-color);
-            margin-top: 8px; font-weight: 700; line-height: 1.2;
-            height: 2.4em; /* Fixed height for 2 lines */
-            display: flex; align-items: center; justify-content: center;
+        /* --- TUTORIAL --- */
+        .tutorial-wrapper {
+            display: flex; flex-direction: row; gap: 10px; width: 100%; justify-content: center; margin-bottom: 20px;
         }
-
+        .tutorial-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .tutorial-scene {
+            width: 100%; height: 100px; background: var(--tut-bg); border-radius: 15px;
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        .t-caption {
+            font-size: 0.75rem; color: var(--sub-text-color); margin-top: 8px; font-weight: 700; line-height: 1.2;
+            height: 2.4em; display: flex; align-items: center; justify-content: center;
+        }
         .t-grid { display: grid; grid-template-columns: repeat(3, 25px); gap: 4px; }
         .t-cell { width: 25px; height: 25px; border-radius: 50%; background: var(--tut-cell); position: relative; display: flex; justify-content: center; align-items: center; }
-
         .t-existing-ring { position: absolute; border: 3px solid var(--primary-color); border-radius: 50%; }
         .t-ring-s { width: 10px; height: 10px; }
         .t-ring-m { width: 18px; height: 18px; }
         .t-ring-l { width: 26px; height: 26px; }
-
-        /* Pointer/Hand SVG */
         .t-pointer {
-            width: 24px; height: 24px;
-            position: absolute; z-index: 10;
-            top: 50%; left: 50%;
-            margin-left: -5px; margin-top: -2px; /* Tip offset */
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-            opacity: 0;
+            width: 24px; height: 24px; position: absolute; z-index: 10; top: 50%; left: 50%;
+            margin-left: -5px; margin-top: -2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); opacity: 0;
         }
         .t-pointer svg { width: 100%; height: 100%; fill: var(--text-color); }
-
         .t-ring-move {
-            border: 3px solid var(--primary-color); border-radius: 50%;
-            position: absolute; top: 50%; left: 50%;
+            border: 3px solid var(--primary-color); border-radius: 50%; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); opacity: 0; z-index: 5;
         }
-
         /* Animations Tut 1 (Line) */
         #tut1 .t-ring-move { width: 18px; height: 18px; animation: t1_ring 3s infinite ease-in-out; }
         #tut1 .t-pointer { animation: t1_hand 3s infinite ease-in-out; }
-        #tut1 .t-cell:nth-child(2) .t-existing-ring, #tut1 .t-cell:nth-child(3) .t-existing-ring {
-             width: 18px; height: 18px; opacity: 0; animation: t1_appear 3s infinite linear;
-        }
-
-        @keyframes t1_hand {
-            0%, 15% { transform: translate(10px, 30px); opacity: 0; }
-            20% { transform: translate(10px, 30px); opacity: 1; }
-            40% { transform: translate(-29px, 0); } /* Move to left cell */
-            50%, 80% { transform: translate(-29px, 0); opacity: 1; }
-            90% { transform: translate(-29px, 0); opacity: 0; }
-        }
-        @keyframes t1_ring {
-            0%, 20% { transform: translate(-50%, 30px); opacity: 0; }
-            25% { transform: translate(-50%, 30px); opacity: 1; }
-            40% { transform: translate(calc(-50% - 29px), -50%); }
-            50% { transform: translate(calc(-50% - 29px), -50%); opacity: 1; }
-            70% { transform: translate(calc(-50% - 29px), -50%) scale(1.4); opacity: 0; }
-            100% { opacity: 0; }
-        }
-        @keyframes t1_appear {
-            0%, 50% { opacity: 1; transform: scale(1); }
-            70% { opacity: 0; transform: scale(1.4); }
-            100% { opacity: 0; }
-        }
-
+        #tut1 .t-cell:nth-child(2) .t-existing-ring, #tut1 .t-cell:nth-child(3) .t-existing-ring { width: 18px; height: 18px; opacity: 0; animation: t1_appear 3s infinite linear; }
+        @keyframes t1_hand { 0%, 15% { transform: translate(10px, 30px); opacity: 0; } 20% { transform: translate(10px, 30px); opacity: 1; } 40% { transform: translate(-29px, 0); } 50%, 80% { transform: translate(-29px, 0); opacity: 1; } 90% { transform: translate(-29px, 0); opacity: 0; } }
+        @keyframes t1_ring { 0%, 20% { transform: translate(-50%, 30px); opacity: 0; } 25% { transform: translate(-50%, 30px); opacity: 1; } 40% { transform: translate(calc(-50% - 29px), -50%); } 50% { transform: translate(calc(-50% - 29px), -50%); opacity: 1; } 70% { transform: translate(calc(-50% - 29px), -50%) scale(1.4); opacity: 0; } 100% { opacity: 0; } }
+        @keyframes t1_appear { 0%, 50% { opacity: 1; transform: scale(1); } 70% { opacity: 0; transform: scale(1.4); } 100% { opacity: 0; } }
         /* Animations Tut 2 (Point) */
         #tut2 .t-ring-move { width: 26px; height: 26px; animation: t2_ring 3s infinite ease-in-out; }
         #tut2 .t-pointer { animation: t2_hand 3s infinite ease-in-out; }
         #tut2 .t-cell:nth-child(2) .t-existing-ring.s { width: 10px; height: 10px; animation: t2_pop 3s infinite; }
         #tut2 .t-cell:nth-child(2) .t-existing-ring.m { width: 18px; height: 18px; animation: t2_pop 3s infinite; }
+        @keyframes t2_hand { 0%, 15% { transform: translate(10px, 30px); opacity: 0; } 20% { transform: translate(10px, 30px); opacity: 1; } 40% { transform: translate(0, 0); } 50%, 80% { transform: translate(0, 0); opacity: 1; } 90% { transform: translate(0, 0); opacity: 0; } }
+        @keyframes t2_ring { 0%, 20% { transform: translate(-50%, 30px); opacity: 0; } 25% { transform: translate(-50%, 30px); opacity: 1; } 40% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, -50%); opacity: 1; } 70% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; } 100% { opacity: 0; } }
+        @keyframes t2_pop { 0%, 50% { opacity: 1; transform: scale(1); } 70% { opacity: 0; transform: scale(1.4); } 100% { opacity: 0; } }
 
-        @keyframes t2_hand {
-            0%, 15% { transform: translate(10px, 30px); opacity: 0; }
-            20% { transform: translate(10px, 30px); opacity: 1; }
-            40% { transform: translate(0, 0); } /* Move to center */
-            50%, 80% { transform: translate(0, 0); opacity: 1; }
-            90% { transform: translate(0, 0); opacity: 0; }
-        }
-        @keyframes t2_ring {
-            0%, 20% { transform: translate(-50%, 30px); opacity: 0; }
-            25% { transform: translate(-50%, 30px); opacity: 1; }
-            40% { transform: translate(-50%, -50%); }
-            50% { transform: translate(-50%, -50%); opacity: 1; }
-            70% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
-            100% { opacity: 0; }
-        }
-        @keyframes t2_pop {
-            0%, 50% { opacity: 1; transform: scale(1); }
-            70% { opacity: 0; transform: scale(1.4); }
-            100% { opacity: 0; }
-        }
-
-        /* --- SETTINGS UI --- */
-        .settings-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; color: var(--text-color); font-weight: 700; font-size: 1.1rem;
-        }
+        /* --- SETTINGS --- */
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: var(--text-color); font-weight: 700; font-size: 1.1rem; }
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 20px; width: 20px;
-            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(22px); }
 
         /* --- BUTTONS --- */
-        .btn {
-            background: var(--primary-gradient); color: white; border: none;
-            padding: 16px 40px; font-size: 1.1rem; border-radius: 50px;
-            cursor: pointer; font-weight: 800; box-shadow: var(--shadow-btn);
-            transition: transform 0.1s; width: 100%; margin-top: 10px;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
+        .btn { background: var(--primary-gradient); color: white; border: none; padding: 16px 40px; font-size: 1.1rem; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: var(--shadow-btn); transition: transform 0.1s; width: 100%; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .btn:active { transform: scale(0.96); }
-        .btn-secondary {
-            background: transparent; color: var(--sub-text-color);
-            box-shadow: none; border: 2px solid rgba(128,128,128,0.3);
-            font-size: 0.9rem;
-        }
+        .btn-secondary { background: transparent; color: var(--sub-text-color); box-shadow: none; border: 2px solid rgba(128,128,128,0.3); font-size: 0.9rem; }
         .btn-green { background: linear-gradient(135deg, #00b894, #55efc4); box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4); }
 
-        .stat-box {
-            background: var(--tut-bg); border-radius: 20px; padding: 15px; margin: 20px 0; width: 100%;
-        }
-        .stat-row {
-            display: flex; justify-content: space-between; color: var(--sub-text-color); font-weight: 700; margin: 5px 0;
-        }
+        .stat-box { background: var(--tut-bg); border-radius: 20px; padding: 15px; margin: 20px 0; width: 100%; }
+        .stat-row { display: flex; justify-content: space-between; color: var(--sub-text-color); font-weight: 700; margin: 5px 0; }
 
         /* --- HUD --- */
-        .hud {
-            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
-            padding: 20px 24px; padding-top: max(20px, env(safe-area-inset-top));
-            display: flex; justify-content: space-between; align-items: flex-start;
-            pointer-events: none; z-index: 5;
-        }
+        .hud { position: absolute; top: 0; left: 0; width: 100%; height: 120px; padding: 20px 24px; padding-top: max(20px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 5; }
         .hud-left, .hud-right { display: flex; gap: 10px; }
-
-        .pill {
-            background: var(--pill-bg); padding: 8px 16px; border-radius: 18px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column;
-            justify-content: center; min-width: 70px;
-        }
+        .pill { background: var(--pill-bg); padding: 8px 16px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: center; min-width: 70px; }
         .pill span { font-size: 0.65rem; color: var(--sub-text-color); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
         .pill strong { font-size: 1.2rem; color: var(--text-color); font-weight: 900; line-height: 1; }
         .pill.target { border: 2px solid rgba(108, 92, 231, 0.15); }
-
-        .menu-btn-small {
-            width: 48px; height: 48px; border-radius: 16px;
-            background: var(--pill-bg); border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            color: var(--text-color); pointer-events: auto; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s;
-        }
+        .menu-btn-small { width: 48px; height: 48px; border-radius: 16px; background: var(--pill-bg); border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); color: var(--text-color); pointer-events: auto; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
         .menu-btn-small svg { width: 24px; height: 24px; fill: var(--text-color); }
         .menu-btn-small:active { transform: scale(0.9); }
 
-        .progress-bar-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 6px;
-            background: rgba(0,0,0,0.05); z-index: 4; transition: opacity 0.5s ease;
-        }
-        .progress-bar {
-            height: 100%; background: var(--primary-gradient); width: 0%; transition: width 0.5s ease;
-        }
+        .progress-bar-container { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: rgba(0,0,0,0.05); z-index: 4; transition: opacity 0.5s ease; }
+        .progress-bar { height: 100%; background: var(--primary-gradient); width: 0%; transition: width 0.5s ease; }
 
     </style>
 </head>
@@ -479,14 +375,11 @@
     <!-- LEVEL WIN -->
     <div id="level-win-overlay" class="overlay">
         <div class="modal">
-            <h2 style="color: var(--secondary-color);">Победа!</h2>
-            <p>Уровень пройден</p>
-            <div class="stat-box">
-                <div class="stat-row">
-                    <span>Счет уровня</span>
-                    <span id="win-score">0</span>
-                </div>
+            <div class="modal-icon" style="color: #00b894;">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
+            <h2 style="color: var(--secondary-color); margin-top: 0;">Победа!</h2>
+            <p>Уровень пройден</p>
             <button class="btn btn-green" id="next-level-btn">СЛЕДУЮЩИЙ</button>
         </div>
     </div>
@@ -494,12 +387,15 @@
     <!-- GAME OVER -->
     <div id="gameover-overlay" class="overlay">
         <div class="modal">
-            <h2 style="color: #ff7675;">Нет ходов</h2>
+            <div class="modal-icon" style="color: #ff7675;">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
+            </div>
+            <h2 style="color: #ff7675; margin-top: 0;">Нет ходов</h2>
             <div class="stat-box">
-                <div class="stat-row">
-                    <span>Счет</span>
-                    <span id="final-score">0</span>
+                <div class="stat-row" style="justify-content: center;">
+                    <span style="font-size: 1.5rem; color: var(--text-color);" id="final-score">0</span>
                 </div>
+                <div style="text-align: center; font-size: 0.8rem; color: var(--sub-text-color);">очков</div>
             </div>
             <button class="btn" id="retry-btn">ЗАНОВО</button>
             <button class="btn btn-secondary" id="go-menu-btn-over">В МЕНЮ</button>
@@ -601,8 +497,15 @@ const AudioSys = {
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
     },
+    resume: function() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
     playTone: function(freq, type, duration, vol = 0.1) {
-        if (!Settings.soundEnabled || !this.ctx) return;
+        if (!Settings.soundEnabled) return;
+        if (!this.ctx) this.init();
+        
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
@@ -636,7 +539,7 @@ class RingPiece {
     constructor(rings) {
         this.rings = rings;
         this.x = 0; 
-        this.y = 0; // FIX: Was missing 'this.' causing global variable issue
+        this.y = 0; 
         this.isDragging = false;
         this.scale = 1;
         this.spawnScale = 0;
@@ -928,6 +831,9 @@ class Game {
 
     bindEvents() {
         const start = (e) => {
+            // Audio Context Resume Hack
+            AudioSys.resume();
+            
             if(this.state !== 'PLAYING') return;
             const pos = this.getPos(e);
             for(let i=0; i<3; i++) {
@@ -1091,7 +997,7 @@ class Game {
         if (this.mode === 'CAMPAIGN' && this.levelScore >= this.targetScore) {
             this.state = 'PAUSED';
             AudioSys.playWin();
-            document.getElementById('win-score').innerText = this.levelScore;
+            // Removed score from Win Modal as requested
             document.getElementById('level-win-overlay').classList.add('active');
         }
     }
