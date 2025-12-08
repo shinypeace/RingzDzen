@@ -78,7 +78,7 @@
             justify-content: center; align-items: center;
             z-index: 10;
             opacity: 0; 
-            visibility: hidden; /* CRITICAL FIX: Ensures buttons are not clickable when hidden */
+            visibility: hidden; 
             transition: opacity 0.3s ease, visibility 0s 0.3s;
         }
         .overlay.active { 
@@ -180,14 +180,14 @@
             border: 3px solid var(--primary-color); border-radius: 50%; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); opacity: 0; z-index: 5;
         }
-        /* Animations Tut 1 (Line) */
+        /* Animations */
         #tut1 .t-ring-move { width: 18px; height: 18px; animation: t1_ring 3s infinite ease-in-out; }
         #tut1 .t-pointer { animation: t1_hand 3s infinite ease-in-out; }
         #tut1 .t-cell:nth-child(2) .t-existing-ring, #tut1 .t-cell:nth-child(3) .t-existing-ring { width: 18px; height: 18px; opacity: 0; animation: t1_appear 3s infinite linear; }
         @keyframes t1_hand { 0%, 15% { transform: translate(10px, 30px); opacity: 0; } 20% { transform: translate(10px, 30px); opacity: 1; } 40% { transform: translate(-29px, 0); } 50%, 80% { transform: translate(-29px, 0); opacity: 1; } 90% { transform: translate(-29px, 0); opacity: 0; } }
         @keyframes t1_ring { 0%, 20% { transform: translate(-50%, 30px); opacity: 0; } 25% { transform: translate(-50%, 30px); opacity: 1; } 40% { transform: translate(calc(-50% - 29px), -50%); } 50% { transform: translate(calc(-50% - 29px), -50%); opacity: 1; } 70% { transform: translate(calc(-50% - 29px), -50%) scale(1.4); opacity: 0; } 100% { opacity: 0; } }
         @keyframes t1_appear { 0%, 50% { opacity: 1; transform: scale(1); } 70% { opacity: 0; transform: scale(1.4); } 100% { opacity: 0; } }
-        /* Animations Tut 2 (Point) */
+        
         #tut2 .t-ring-move { width: 26px; height: 26px; animation: t2_ring 3s infinite ease-in-out; }
         #tut2 .t-pointer { animation: t2_hand 3s infinite ease-in-out; }
         #tut2 .t-cell:nth-child(2) .t-existing-ring.s { width: 10px; height: 10px; animation: t2_pop 3s infinite; }
@@ -352,6 +352,14 @@
             </div>
 
             <div class="settings-row">
+                <span>Вибрация</span>
+                <label class="switch">
+                    <input type="checkbox" id="vibro-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="settings-row">
                 <span>Темная тема</span>
                 <label class="switch">
                     <input type="checkbox" id="theme-toggle">
@@ -436,7 +444,6 @@ const VKHandler = {
         return localStorage.getItem(key) || defaultVal;
     },
     checkAdTrigger: function(isGameOver = false) {
-        // Ads logic: Interstitial every 5 levels or on Game Over in endless
         if (isGameOver && selectedMode === 'ENDLESS') {
              this.showInterstitial();
         } else if (!isGameOver) {
@@ -452,19 +459,27 @@ const VKHandler = {
 // --- SETTINGS ---
 const Settings = {
     soundEnabled: true,
+    vibrationEnabled: true,
     darkMode: false,
     init: async function() {
         const sound = await VKHandler.loadData('zr_sound', 'true');
         this.soundEnabled = (sound === 'true');
+        const vibro = await VKHandler.loadData('zr_vibro', 'true');
+        this.vibrationEnabled = (vibro === 'true');
         const theme = await VKHandler.loadData('zr_theme', 'false');
         this.darkMode = (theme === 'true');
         this.apply();
         document.getElementById('sound-toggle').checked = this.soundEnabled;
+        document.getElementById('vibro-toggle').checked = this.vibrationEnabled;
         document.getElementById('theme-toggle').checked = this.darkMode;
         
         document.getElementById('sound-toggle').addEventListener('change', (e) => {
             this.soundEnabled = e.target.checked;
             VKHandler.saveData('zr_sound', this.soundEnabled);
+        });
+        document.getElementById('vibro-toggle').addEventListener('change', (e) => {
+            this.vibrationEnabled = e.target.checked;
+            VKHandler.saveData('zr_vibro', this.vibrationEnabled);
         });
         document.getElementById('theme-toggle').addEventListener('change', (e) => {
             this.darkMode = e.target.checked;
@@ -502,9 +517,28 @@ const AudioSys = {
             this.ctx.resume();
         }
     },
+    vibrate: function(type) {
+        if (!Settings.vibrationEnabled) return;
+        
+        // VK Native Taptics
+        if(VKHandler.initialized) {
+            let style = 'light';
+            if (type === 'medium') style = 'medium';
+            if (type === 'heavy') style = 'heavy';
+            vkBridge.send('VKWebAppTapticImpactOccurred', { style: style }).catch(()=>{});
+        }
+        
+        // Web Fallback
+        if (navigator.vibrate) {
+            if (type === 'light') navigator.vibrate(15);
+            else if (type === 'medium') navigator.vibrate(40);
+            else if (type === 'heavy') navigator.vibrate([30, 50, 30]);
+        }
+    },
     playTone: function(freq, type, duration, vol = 0.1) {
         if (!Settings.soundEnabled) return;
         if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
         
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -517,18 +551,20 @@ const AudioSys = {
         osc.start();
         osc.stop(this.ctx.currentTime + duration);
     },
-    playPickup: function() { this.playTone(300, 'sine', 0.1, 0.05); },
-    playDrop: function() { this.playTone(200, 'sine', 0.15, 0.08); },
-    playError: function() { this.playTone(100, 'sawtooth', 0.2, 0.05); },
+    playPickup: function() { this.playTone(300, 'sine', 0.1, 0.05); this.vibrate('light'); },
+    playDrop: function() { this.playTone(200, 'sine', 0.15, 0.08); this.vibrate('light'); },
+    playError: function() { this.playTone(100, 'sawtooth', 0.2, 0.05); this.vibrate('medium'); },
     playWin: function() { 
         this.playTone(400, 'sine', 0.1, 0.1); 
         setTimeout(() => this.playTone(500, 'sine', 0.1, 0.1), 100);
         setTimeout(() => this.playTone(600, 'sine', 0.3, 0.1), 200);
+        this.vibrate('heavy');
     },
     playPop: function(combo) {
         const base = 440 + (combo * 50);
         this.playTone(base, 'sine', 0.15, 0.1);
         setTimeout(() => this.playTone(base * 1.5, 'sine', 0.15, 0.05), 50);
+        this.vibrate(combo > 2 ? 'medium' : 'light');
     }
 };
 
@@ -657,8 +693,10 @@ class Game {
     }
 
     initGame() {
+        // Init Audio on user gesture
         AudioSys.init();
-        // Read global selectedMode
+        AudioSys.resume();
+        
         this.mode = selectedMode;
         
         if (this.mode === 'CAMPAIGN') {
@@ -700,9 +738,26 @@ class Game {
     }
 
     generatePiece() {
-        let difficulty = this.mode === 'CAMPAIGN' ? this.currentLevel : 1 + (this.score / 1000);
+        // Updated endless difficulty scaling
+        let difficulty;
+        if (this.mode === 'CAMPAIGN') {
+            difficulty = this.currentLevel;
+        } else {
+            // Endless: Increase difficulty every 1200 points
+            difficulty = 1 + Math.floor(this.score / 1200);
+        }
+        
+        // Cap max difficulty for colors at 6 (max available colors)
+        // Difficulty 1-3: 3 colors
+        // Difficulty 4-6: 4 colors
+        // Difficulty 7-9: 5 colors
+        // Difficulty 10+: 6 colors
         const maxColors = Math.min(CONFIG.colors.length, 3 + Math.floor((difficulty - 1) / 3));
+        
+        // Increase complex piece chance gradually
+        // Cap at 60% complex pieces
         const complexChance = Math.min(0.6, 0.1 + (difficulty * 0.05));
+        
         let rings = { small: null, medium: null, large: null };
         const getCol = () => Math.floor(Math.random() * maxColors);
         
@@ -874,7 +929,12 @@ class Game {
         window.addEventListener('touchend', end);
 
         // Buttons
-        document.getElementById('start-btn').addEventListener('click', () => { document.getElementById('menu-screen').classList.remove('active'); this.initGame(); });
+        document.getElementById('start-btn').addEventListener('click', () => { 
+            // Explicit resume on click
+            AudioSys.resume();
+            document.getElementById('menu-screen').classList.remove('active'); 
+            this.initGame(); 
+        });
         document.getElementById('rules-btn').addEventListener('click', () => { document.getElementById('rules-overlay').classList.add('active'); });
         document.getElementById('close-rules-btn').addEventListener('click', () => { document.getElementById('rules-overlay').classList.remove('active'); });
         document.getElementById('open-settings-btn').addEventListener('click', () => { document.getElementById('settings-overlay').classList.add('active'); });
